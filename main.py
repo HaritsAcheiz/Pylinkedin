@@ -23,7 +23,7 @@ class Scraper:
 
     # define function
     # fetch regular function
-    def base_fetch(self, url):
+    def search_result_fetch(self, url):
         # define headers
         headers = {
             'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0'
@@ -41,13 +41,20 @@ class Scraper:
         print(response)
         print(response.text)
 
+    def get_job_links(self, response):
+        tree = HTMLParser(response.text)
+        jobs = tree.css('ul.jobs-search__results-list > li')
+        print(len(jobs))
+        job_links = [job.css_first('a[data-tracking-control-name="public_jobs_jserp-result_search-card"]').attributes.get('href', 'None') for job in jobs]
+        print(job_links)
+
     # parse function
-    def parse(self, client, response):
+    def get_data(self, response):
         # parse html
         tree = HTMLParser(response.text)
 
         # select element
-        data1 = tree.css_first('title').text()
+        data1 = tree.css_first('li').text()
         data2 = tree.css_first('a').text()
         if tree.css_first('p'):
             data3 = tree.css_first('p').text()
@@ -80,12 +87,21 @@ class Scraper:
     # main function
     def main(self):
         # define targerted url
-        url = 'https://www.linkedin.com/jobs/search/?currentJobId=3644259941&geoId=102095887&keywords=insurance&location=California%2C%20United%20States&refresh=true&sortBy=R'
+        keyword = "Insurance"
+        location = "San%20Francisco%20County%2C%20California%2C%20United%20States"
+        geoId = "100901743"
+        trk = "public_jobs_jobs-search-bar_search-submit"
+        position = 1
+        pageNum = 0
+
+        url = f'https://www.linkedin.com/jobs/search?keywords={keyword}&location={location}&geoId={geoId}&trk={trk}&position={str(position)}&pageNum={str(pageNum)}'
 
         # main program
-        client, response = self.base_fetch(url)
-        csrf = self.get_csrf(response)
-        self.second_fetch(client)
+        client, response = self.search_result_fetch(url)
+        job_links = self.get_job_links(response)
+
+        # csrf = self.get_csrf(response)
+        # self.second_fetch(client)
         # self.get_data()
 
         # datas = self.parse(response)
